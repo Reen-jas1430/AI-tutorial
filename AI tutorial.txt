@@ -1,70 +1,65 @@
 !pip install google-generativeai --upgrade
-# Assuming `gemini` is the library name (replace with actual library if different)
+
 import google.generativeai as genai
 
-# Set your Gemini API key
 genai.configure(api_key="AIzaSyChtYB1BbCPCks9cXseBQV3lbEHr8GXWRw")
 
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 
-# Define the system prompt for the tutor bot
-system_prompt = "You are a knowledgeable and friendly tutor. Your role is to provide explanations that are adapted to the student's age and comprehension level, making learning accessible and enjoyable."
+system_prompt = "You are a knowledgeable, friendly female tutor named Clara. You adapt your explanations to the student's age and comprehension level, creating a warm, approachable, and helpful learning environment."
 
-# Function to get an age-appropriate prompt based on the user's input
-def get_age_appropriate_prompt(age_group, subject, topic, user_input):
+def determine_age_group(age_input):
+    try:
+        age = int(age_input)
+        if age <= 12:
+            return 'young'
+        elif 13 <= age <= 18:
+            return 'teen'
+        else:
+            return 'adult'
+    except ValueError:
+        age_input = age_input.lower()
+        if age_input in ['young', 'teen', 'adult']:
+            return age_input
+        else:
+            return None
+
+def get_age_appropriate_prompt(name, age_group, subject, topic, user_input):
     if age_group == 'young':
-        prompt = f"{system_prompt}\nPlease explain in a simple and fun way suited for a young child.\nSubject: {subject}\nTopic: {topic}\nUser: {user_input}\n:"
+        prompt = f"{system_prompt}\nHello {name}! Let's make learning fun and simple.\nSubject: {subject}\nTopic: {topic}\nUser: {user_input}\n:"
     elif age_group == 'teen':
-        prompt = f"{system_prompt}\nPlease explain in a way that's engaging and understandable for a teenager.\nSubject: {subject}\nTopic: {topic}\nUser: {user_input}\n:"
+        prompt = f"{system_prompt}\nHi {name}! I'll explain this in a way that's interesting and easy to understand.\nSubject: {subject}\nTopic: {topic}\nUser: {user_input}\n:"
     elif age_group == 'adult':
-        prompt = f"{system_prompt}\nPlease explain in a detailed and professional manner suitable for an adult.\nSubject: {subject}\nTopic: {topic}\nUser: {user_input}\n:"
+        prompt = f"{system_prompt}\nHi {name}, I'll provide a thorough and detailed explanation just for you.\nSubject: {subject}\nTopic: {topic}\nUser: {user_input}\n:"
     else:
-        prompt = f"{system_prompt}\nPlease explain in a clear and helpful manner.\nSubject: {subject}\nTopic: {topic}\nUser: {user_input}\n:"
+        prompt = f"{system_prompt}\nHello {name}, I'll make this as clear and helpful as possible.\nSubject: {subject}\nTopic: {topic}\nUser: {user_input}\n:"
     return prompt
 
-# Define the function to interact with the bot
-def chat_with_bot(age_group, subject, topic, user_input):
-    # Generate the age-appropriate prompt based on age, subject, and topic
-    prompt = get_age_appropriate_prompt(age_group, subject, topic, user_input)
-    
-    # Using the correct method to generate a response from the model
+def chat_with_bot(name, age_group, subject, topic, user_input):
+    prompt = get_age_appropriate_prompt(name, age_group, subject, topic, user_input)
     response = model.generate_content(prompt)
-    
-    # Limit the response to 10 lines maximum by splitting and trimming
     lines = response.text.split('\n')
-    response_text = '\n'.join(lines[:10])  # Keep the first 10 lines
-    
+    response_text = '\n'.join(lines[:10])
     return response_text
 
-# Main loop to chat with the bot
 if __name__ == "__main__":
-    print("Hello! I'm your friendly tutor bot.")
-    
-    # Ask user for their age group
-    age_group = input("Please enter your age group (young, teen, adult): ").lower()
-    
-    if age_group not in ['young', 'teen', 'adult']:
-        print("Sorry, I can only respond to users categorized as 'young', 'teen', or 'adult'.")
-    
+    print("Hello! I'm Clara, your friendly tutor bot.")
+    name = input("What’s your name? ")
+    age_input = input(f"Nice to meet you, {name}! Please enter your age (or type 'young', 'teen', 'adult'): ")
+    age_group = determine_age_group(age_input)
+
+    if age_group is None:
+        print("Sorry, I couldn't determine your age group. Please enter a valid age or age group ('young', 'teen', 'adult').")
     else:
-        # Ask user for the subject they need help with
         subject = input("What subject do you need help with? (e.g., Math, Science, History, etc.): ")
-
+        
         while True:
-            # Ask for the specific topic or question
-            topic = input("What specific topic or question do you have? ")
-
-            # User can enter 'bye' to exit the chat
+            topic = input(f"What specific topic or question do you have in {subject}, {name}? ")
             if topic.lower() in ['exit', 'quit', 'bye']:
-                print("Tutor: Goodbye!")
+                print("Clara: Goodbye! Take care and happy learning!")
                 break
 
-            # Get the user input or question
-            user_input = input("You: ")
-
-            # Get the response from the model based on age group, subject, topic, and user input
-            response = chat_with_bot(age_group, subject, topic, user_input)
-
-            # Print the model's response, keeping it concise (max 10 lines)
-            print(f"Tutor: {response}")
+            user_input = topic
+            response = chat_with_bot(name, age_group, subject, topic, user_input)
+            print(f"Clara: {response}")
